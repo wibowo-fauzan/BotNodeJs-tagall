@@ -35,16 +35,19 @@ async function connectToWhatsApp() {
         if (!msg.message || !msg.key.remoteJid.endsWith("@g.us")) return; // Hanya di grup
 
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
-        
-        if (text === "!tagall") {
+        const sender = msg.key.participant; // Pengirim pesan
+
+        // Pastikan trigger tetap @mantion
+        if (text === "@mantion") {
             try {
                 const groupMetadata = await sock.groupMetadata(msg.key.remoteJid);
                 const participants = groupMetadata.participants.map(p => p.id);
 
                 await sock.sendMessage(msg.key.remoteJid, { 
-                    text: `👥 Mention Semua:\n${participants.map(id => `@${id.split("@")[0]}`).join(" ")}`,
+                    text: `${participants.map(id => `@${id.split("@")[0]}`).join(" ")}`,
                     mentions: participants
-                });
+                }, { quoted: msg }); // Balas langsung ke pengirim
+                
             } catch (error) {
                 console.error("❌ Gagal mengambil data grup:", error);
             }
